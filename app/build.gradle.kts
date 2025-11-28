@@ -53,6 +53,17 @@ android {
 }
 
 dependencies {
+
+    // Core modules
+    implementation(project(":core"))
+    implementation(project(":core-ui"))
+
+    // Feature modules
+    implementation(project(":feature-home"))
+    implementation(project(":feature-report"))
+    implementation(project(":feature-map"))
+    implementation(project(":feature-profile"))
+
     // existing libs from version catalog
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
