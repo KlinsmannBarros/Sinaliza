@@ -7,13 +7,13 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.ui.graphics.vector.ImageVector
 
-sealed class BottomNavItem(
+sealed class BottomNavItem_old(
     val route: String,
     val icon: ImageVector,
     val label: String
 ) {
-    object Home : BottomNavItem("home", Icons.Filled.Home, "Home")
-    object Report : BottomNavItem("report", Icons.Filled.Create, "Report")
-    object Map : BottomNavItem("map", Icons.Filled.LocationOn, "Map")
-    object Profile : BottomNavItem("profile", Icons.Filled.Person, "Profile")
+    object Home : BottomNavItem_old("home", Icons.Filled.Home, "Home")
+    object Report : BottomNavItem_old("report", Icons.Filled.Create, "Report")
+    object Map : BottomNavItem_old("map", Icons.Filled.LocationOn, "Map")
+    object Profile : BottomNavItem_old("profile", Icons.Filled.Person, "Profile")
 }

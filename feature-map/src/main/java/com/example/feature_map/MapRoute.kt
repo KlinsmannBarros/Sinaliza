@@ -10,6 +10,6 @@ import androidx.compose.ui.Modifier
 @Composable
 fun MapRoute() {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("Map (feature module)")
+        Text("Map view placeholder (add Maps SDK when ready)")
     }
 }
