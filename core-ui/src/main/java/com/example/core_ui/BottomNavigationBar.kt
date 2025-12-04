@@ -5,6 +5,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -37,17 +38,21 @@ fun BottomNavigationBar(
     val navBackStackEntry = navController.currentBackStackEntryAsState().value
     val currentRoute = navBackStackEntry?.destination?.route
 
+    // Make the card fill the available width so it can be centered properly
     Card(
         modifier = modifier
+            .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 8.dp)
             .clip(RoundedCornerShape(16.dp)),
         elevation = CardDefaults.cardElevation(defaultElevation = elevationDp.dp),
         colors = CardDefaults.cardColors(containerColor = backgroundColor)
     ) {
+        // Row now fills full width and uses even spacing
         Row(
             modifier = Modifier
+                .fillMaxWidth()
                 .padding(horizontal = 8.dp, vertical = 6.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
             items.forEach { item ->
