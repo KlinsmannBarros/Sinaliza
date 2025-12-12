@@ -71,10 +71,10 @@ fun ProfileRoute() {
         }
 
         // Name + Email
-        Text("Ana Example", style = MaterialTheme.typography.headlineSmall)
+        Text(" Random Example", style = MaterialTheme.typography.headlineSmall)
         Spacer(modifier = Modifier.height(6.dp))
         Text(
-            "ana@example.com",
+            "random@example.com",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
