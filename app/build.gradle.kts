@@ -1,16 +1,14 @@
 @file:Suppress("DEPRECATION")
 
 plugins {
-    alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
 android {
     namespace = "com.example.sinaliza"
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.example.sinaliza"
@@ -37,14 +35,13 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
 
-    // Enable Compose
     buildFeatures {
         compose = true
     }
 
-    // Compiler extension version for Compose — keep this synced with Compose UI version
+    // MUST match all modules using Compose
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.3"
+        kotlinCompilerExtensionVersion = "1.5.14"
     }
 
     kotlinOptions {
@@ -53,33 +50,47 @@ android {
 }
 
 dependencies {
+
+    // -------- Project modules --------
     implementation(project(":core"))
     implementation(project(":core-ui"))
-
     implementation(project(":feature-home"))
     implementation(project(":feature-report"))
     implementation(project(":feature-map"))
     implementation(project(":feature-profile"))
 
-    // Compose BOM & UI libs (from version catalog)
-    implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.compose.ui)
-    implementation(libs.androidx.compose.material3)
-    implementation(libs.androidx.compose.ui.tooling.preview)
+    // -------- Compose BOM --------
+    implementation(platform("androidx.compose:compose-bom:2024.04.01"))
 
-    // Navigation (from version catalog)
-    implementation(libs.navigation.compose)
+    // -------- Compose UI --------
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.foundation:foundation")   // <-- REQUIRED for weight()
+    implementation("androidx.compose.material3:material3")
+    implementation("androidx.compose.ui:ui-tooling-preview")
 
-    // Lifecycle & ViewModel for Compose
-    implementation(libs.androidx.lifecycle.viewmodel.compose)
-    implementation(libs.androidx.lifecycle.runtime.ktx)
+    // Material Icons (for map buttons)
+    implementation("androidx.compose.material:material-icons-extended:1.6.0")
 
-    // Coroutines
-    implementation(libs.kotlinx.coroutines.core)
+    // -------- Navigation --------
+    implementation("androidx.navigation:navigation-compose:2.9.6")
 
-    // AndroidX basics & Material (from version catalog)
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat)
-    implementation(libs.material)
+    // -------- Lifecycle --------
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.10.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0")
+
+    // -------- Coroutines --------
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
+
+    // -------- AndroidX --------
+    implementation("androidx.core:core-ktx:1.17.0")
+    implementation("androidx.appcompat:appcompat:1.7.1")
+    implementation("com.google.android.material:material:1.13.0")
+
+    // -------- Google Maps (Compose + Location) --------
+    implementation("com.google.android.gms:play-services-maps:19.2.0")
+    implementation("com.google.maps.android:maps-compose:6.12.2")
+    implementation("com.google.android.gms:play-services-location:21.3.0")
+
+    // -------- Debug tools --------
+    debugImplementation("androidx.compose.ui:ui-tooling")
 }
-
