@@ -31,14 +31,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun ReportRoute() {
-    var title by remember { mutableStateOf("") }
+fun ReportRoute(
+    reportId: String? = null
+) {
+
+    // Prefill title if coming from map
+    var title by remember {
+        mutableStateOf(reportId ?: "")
+    }
+
     var description by remember { mutableStateOf("") }
     var category by remember { mutableStateOf("Select category") }
     var attachmentsCount by remember { mutableStateOf(0) }
-    var locationText by remember { mutableStateOf("No location chosen") }
+    var locationText by remember {
+        mutableStateOf(
+            if (reportId != null) "Location selected from map"
+            else "No location chosen"
+        )
+    }
 
-    // Simple form validation
     val canSubmit = title.isNotBlank() && description.isNotBlank()
 
     Column(
@@ -47,8 +58,15 @@ fun ReportRoute() {
             .padding(20.dp),
         verticalArrangement = Arrangement.Top
     ) {
-        Text(text = "Report an issue", style = MaterialTheme.typography.headlineSmall)
+
+        // Title
+        Text(
+            text = if (reportId == null) "Report an issue" else "Edit report",
+            style = MaterialTheme.typography.headlineSmall
+        )
+
         Spacer(modifier = Modifier.height(8.dp))
+
         Text(
             text = "Give us a short title and a clear description. Add a photo and location if available.",
             style = MaterialTheme.typography.bodyMedium,
@@ -57,6 +75,7 @@ fun ReportRoute() {
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        // Title input
         OutlinedTextField(
             value = title,
             onValueChange = { title = it },
@@ -66,6 +85,7 @@ fun ReportRoute() {
 
         Spacer(modifier = Modifier.height(12.dp))
 
+        // Description input
         OutlinedTextField(
             value = description,
             onValueChange = { description = it },
@@ -77,19 +97,25 @@ fun ReportRoute() {
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Category & Location row
+        // Category & Location
         Row(
             modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
+
             ElevatedCard(
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(12.dp),
                 elevation = CardDefaults.elevatedCardElevation(2.dp)
             ) {
-                TextButton(onClick = { /* TODO: show category picker */ }, modifier = Modifier.fillMaxWidth().padding(12.dp)) {
-                    Text(text = category)
+                TextButton(
+                    onClick = { /* TODO: category picker */ },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp)
+                ) {
+                    Text(category)
                 }
             }
 
@@ -98,33 +124,43 @@ fun ReportRoute() {
                 shape = RoundedCornerShape(12.dp),
                 elevation = CardDefaults.elevatedCardElevation(2.dp)
             ) {
-                TextButton(onClick = { /* TODO: pick location */ }, modifier = Modifier.fillMaxWidth().padding(12.dp)) {
-                    Text(text = "Location")
+                TextButton(
+                    onClick = { /* TODO: location picker */ },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp)
+                ) {
+                    Text("Location")
                 }
             }
         }
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Attachments area
-        Text(text = "Attachments", style = MaterialTheme.typography.titleMedium)
+        // Attachments
+        Text("Attachments", style = MaterialTheme.typography.titleMedium)
+
         Spacer(modifier = Modifier.height(8.dp))
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Start,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // Placeholder card for attachments
+        Row(verticalAlignment = Alignment.CenterVertically) {
+
             Card(
                 modifier = Modifier
                     .size(96.dp)
-                    .border(1.dp, MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp)),
-                shape = RoundedCornerShape(8.dp),
+                    .border(
+                        1.dp,
+                        MaterialTheme.colorScheme.surfaceVariant,
+                        RoundedCornerShape(8.dp)
+                    ),
                 elevation = CardDefaults.cardElevation(0.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Text(text = if (attachmentsCount > 0) "$attachmentsCount photo(s)" else "No photo")
+                    Text(
+                        if (attachmentsCount > 0)
+                            "$attachmentsCount photo(s)"
+                        else
+                            "No photo"
+                    )
                 }
             }
 
@@ -134,34 +170,51 @@ fun ReportRoute() {
                 Button(onClick = { attachmentsCount++ }) {
                     Text("Add photo")
                 }
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(text = "Tip: photos help us locate issues faster", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    "Photos help us identify issues faster",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Location preview (simple)
+        // Location preview
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
             elevation = CardDefaults.cardElevation(2.dp)
         ) {
-            Row(modifier = Modifier.fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text(text = locationText, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
-                TextButton(onClick = { /* TODO: pick location */ }) { Text("Choose") }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    locationText,
+                    modifier = Modifier.weight(1f)
+                )
+                TextButton(onClick = { /* TODO */ }) {
+                    Text("Choose")
+                }
             }
         }
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Submit button
+        // Submit
         Button(
-            onClick = { /* TODO: submit report */ },
+            onClick = {
+                // TODO: submit report
+            },
             enabled = canSubmit,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text(text = "Submit Report")
+            Text("Submit Report")
         }
     }
 }

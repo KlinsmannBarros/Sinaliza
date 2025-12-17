@@ -1,8 +1,5 @@
 package com.example.sinaliza
 
-// core-ui styled components & theme
-
-// Feature entry points
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -36,6 +33,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MyApp() {
     val navController = rememberNavController()
+
     val items = listOf(
         BottomNavItem.Home,
         BottomNavItem.Report,
@@ -43,13 +41,10 @@ fun MyApp() {
         BottomNavItem.Profile
     )
 
-    // Wrap in your core-ui theme so the bar uses the correct color scheme
     SinalizaCoreTheme {
-        // Observe back stack to compute title and selected state
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
 
-        // Map route -> title; keep short and friendly
         val title = when (currentRoute) {
             BottomNavItem.Home.route -> "Home"
             BottomNavItem.Report.route -> "Report"
@@ -72,10 +67,18 @@ fun MyApp() {
                 startDestination = BottomNavItem.Home.route,
                 modifier = Modifier.padding(innerPadding)
             ) {
-                composable(BottomNavItem.Home.route) { HomeRoute() }
-                composable(BottomNavItem.Report.route) { ReportRoute() }
-                composable(BottomNavItem.Map.route) { MapRoute() }
-                composable(BottomNavItem.Profile.route) { ProfileRoute() }
+                composable(BottomNavItem.Home.route) {
+                    HomeRoute()
+                }
+                composable(BottomNavItem.Report.route) {
+                    ReportRoute()
+                }
+                composable(BottomNavItem.Map.route) {
+                    MapRoute()
+                }
+                composable(BottomNavItem.Profile.route) {
+                    ProfileRoute()
+                }
             }
         }
     }
