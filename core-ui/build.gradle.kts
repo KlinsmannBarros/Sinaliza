@@ -1,7 +1,7 @@
 plugins {
-    id("com.android.library")
-    id("org.jetbrains.kotlin.android")
-    id("org.jetbrains.kotlin.plugin.compose")
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.compose.compiler)
 }
 
 android {
@@ -16,10 +16,6 @@ android {
         compose = true
     }
 
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.14"
-    }
-
     kotlinOptions {
         jvmTarget = "11"
     }
@@ -31,25 +27,24 @@ android {
 }
 
 dependencies {
-    // Compose BOM + UI
-    implementation(platform("androidx.compose:compose-bom:2024.04.01"))
-    implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.material3:material3")
-    implementation("androidx.compose.ui:ui-tooling-preview:1.6.0")
 
-    // Icons extended (for Map etc.)
-    implementation("androidx.compose.material:material-icons-extended:1.6.0")
+    // Compose BOM
+    implementation(platform(libs.androidx.compose.bom))
 
-    // Navigation for Compose (important — fixes your unresolved references)
-    implementation("androidx.navigation:navigation-compose:2.9.6")
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.ui.tooling.preview)
+    implementation(libs.androidx.compose.icons.extended)
 
-    // lifecycle (optional)
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.0")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0")
+    debugImplementation(libs.androidx.compose.ui.tooling)
 
-    // helpful tooling (inspector)
-    debugImplementation("androidx.compose.ui:ui-tooling:1.6.0")
+    // Navigation
+    implementation(libs.navigation.compose)
 
-    // core ktx
-    implementation("androidx.core:core-ktx:1.10.1")
+    // Lifecycle
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+
+    // Core
+    implementation(libs.androidx.core.ktx)
 }

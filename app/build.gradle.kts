@@ -1,9 +1,9 @@
 @file:Suppress("DEPRECATION")
 
 plugins {
-    id("com.android.application")
-    id("org.jetbrains.kotlin.android")
-    id("org.jetbrains.kotlin.plugin.compose")
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.compose.compiler)
 }
 
 android {
@@ -39,11 +39,6 @@ android {
         compose = true
     }
 
-    // MUST match all modules using Compose
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.14"
-    }
-
     kotlinOptions {
         jvmTarget = "11"
     }
@@ -51,7 +46,7 @@ android {
 
 dependencies {
 
-    // -------- Project modules --------
+    // ---------------- PROJECT MODULES ----------------
     implementation(project(":core"))
     implementation(project(":core-ui"))
     implementation(project(":feature-home"))
@@ -59,38 +54,33 @@ dependencies {
     implementation(project(":feature-map"))
     implementation(project(":feature-profile"))
 
-    // -------- Compose BOM --------
-    implementation(platform("androidx.compose:compose-bom:2024.04.01"))
+    // ---------------- COMPOSE ----------------
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.foundation)
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.ui.tooling.preview)
+    implementation(libs.androidx.compose.icons.extended)
 
-    // -------- Compose UI --------
-    implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.foundation:foundation")   // <-- REQUIRED for weight()
-    implementation("androidx.compose.material3:material3")
-    implementation("androidx.compose.ui:ui-tooling-preview")
+    debugImplementation(libs.androidx.compose.ui.tooling)
 
-    // Material Icons (for map buttons)
-    implementation("androidx.compose.material:material-icons-extended:1.6.0")
+    // ---------------- NAVIGATION ----------------
+    implementation(libs.navigation.compose)
 
-    // -------- Navigation --------
-    implementation("androidx.navigation:navigation-compose:2.9.6")
+    // ---------------- LIFECYCLE ----------------
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
 
-    // -------- Lifecycle --------
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.10.0")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0")
+    // ---------------- COROUTINES ----------------
+    implementation(libs.kotlinx.coroutines.core)
 
-    // -------- Coroutines --------
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
+    // ---------------- ANDROID CORE ----------------
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.material)
 
-    // -------- AndroidX --------
-    implementation("androidx.core:core-ktx:1.17.0")
-    implementation("androidx.appcompat:appcompat:1.7.1")
-    implementation("com.google.android.material:material:1.13.0")
-
-    // -------- Google Maps (Compose + Location) --------
-    implementation("com.google.android.gms:play-services-maps:19.2.0")
-    implementation("com.google.maps.android:maps-compose:6.12.2")
-    implementation("com.google.android.gms:play-services-location:21.3.0")
-
-    // -------- Debug tools --------
-    debugImplementation("androidx.compose.ui:ui-tooling")
+    // ---------------- MAPS ----------------
+    implementation(libs.play.services.maps)
+    implementation(libs.maps.compose)
+    implementation(libs.play.services.location)
 }

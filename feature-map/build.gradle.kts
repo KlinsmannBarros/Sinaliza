@@ -1,7 +1,9 @@
 plugins {
-    id("com.android.library")
-    id("org.jetbrains.kotlin.android")
-    id("org.jetbrains.kotlin.plugin.compose")
+
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.compose)
+
 }
 
 android {
@@ -18,10 +20,6 @@ android {
         compose = true
     }
 
-    composeOptions {
-        // MUST match app module
-        kotlinCompilerExtensionVersion = "1.5.14"
-    }
 
     kotlinOptions {
         jvmTarget = "11"
@@ -37,36 +35,36 @@ dependencies {
     implementation(project(":core-ui"))
     implementation(project(":core"))
 
-    // Compose BOM
-    implementation(platform("androidx.compose:compose-bom:2024.04.01"))
+    // Use the version catalog (libs) for all dependencies
 
-    // Compose UI
-    implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.foundation:foundation")
-    implementation("androidx.compose.material3:material3")
-    implementation("androidx.compose.ui:ui-tooling-preview")
+    // Compose BOM - This imports the correct versions for all Compose libraries
+    implementation(platform(libs.androidx.compose.bom))
 
-    // Required for Map icons (Place, MyLocation, ChevronRight)
-    implementation("androidx.compose.material:material-icons-extended")
+    // Compose dependencies (versions are managed by the BOM)
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.foundation)
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.ui.tooling.preview)
+    implementation(libs.androidx.compose.icons.extended)
 
-    // Navigation (needed if MapRoute() uses NavController)
-    implementation("androidx.navigation:navigation-compose:2.9.6")
+    // Navigation
+    implementation(libs.navigation.compose)
 
     // Lifecycle / ViewModel
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.10.0")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0")
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
 
     // Coroutines
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
+    implementation(libs.kotlinx.coroutines.core)
 
-    // AndroidX core
-    implementation("androidx.core:core-ktx:1.17.0")
+    // AndroidX Core
+    implementation(libs.androidx.core.ktx)
 
     // Google Maps & Location
-    implementation("com.google.android.gms:play-services-maps:19.2.0")
-    implementation("com.google.maps.android:maps-compose:6.12.2")
-    implementation("com.google.android.gms:play-services-location:21.3.0")
+    implementation(libs.play.services.maps)
+    implementation(libs.maps.compose)
+    implementation(libs.play.services.location)
 
     // Debug
-    debugImplementation("androidx.compose.ui:ui-tooling")
+    debugImplementation(libs.androidx.compose.ui.tooling)
 }

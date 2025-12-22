@@ -8,10 +8,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.sinaliza.coreui.AppTopBar
 import com.example.sinaliza.coreui.BottomNavItem
 import com.example.sinaliza.coreui.BottomNavigationBar
@@ -22,8 +24,10 @@ import com.example.sinaliza.feature.profile.ProfileRoute
 import com.example.sinaliza.feature.report.ReportRoute
 
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContent {
             MyApp()
         }
@@ -42,14 +46,15 @@ fun MyApp() {
     )
 
     SinalizaCoreTheme {
+
         val navBackStackEntry by navController.currentBackStackEntryAsState()
         val currentRoute = navBackStackEntry?.destination?.route
 
-        val title = when (currentRoute) {
-            BottomNavItem.Home.route -> "Home"
-            BottomNavItem.Report.route -> "Report"
-            BottomNavItem.Map.route -> "Map"
-            BottomNavItem.Profile.route -> "Profile"
+        val title = when {
+            currentRoute?.startsWith("report") == true -> "Report"
+            currentRoute == BottomNavItem.Home.route -> "Home"
+            currentRoute == BottomNavItem.Map.route -> "Map"
+            currentRoute == BottomNavItem.Profile.route -> "Profile"
             else -> "Sinaliza"
         }
 
@@ -62,20 +67,50 @@ fun MyApp() {
                 )
             }
         ) { innerPadding ->
+
             NavHost(
                 navController = navController,
                 startDestination = BottomNavItem.Home.route,
                 modifier = Modifier.padding(innerPadding)
             ) {
+
                 composable(BottomNavItem.Home.route) {
                     HomeRoute()
                 }
-                composable(BottomNavItem.Report.route) {
-                    ReportRoute()
-                }
+
                 composable(BottomNavItem.Map.route) {
-                    MapRoute()
+                    MapRoute(navController)
                 }
+
+                composable(
+                    route = "report?lat={lat}&lng={lng}",
+                    arguments = listOf(
+                        navArgument("lat") {
+                            type = NavType.StringType
+                            nullable = true
+                        },
+                        navArgument("lng") {
+                            type = NavType.StringType
+                            nullable = true
+                        }
+                    )
+                ) { backStackEntry ->
+
+                    val lat = backStackEntry.arguments
+                        ?.getString("lat")
+                        ?.toDoubleOrNull()
+
+                    val lng = backStackEntry.arguments
+                        ?.getString("lng")
+                        ?.toDoubleOrNull()
+
+                    ReportRoute(
+                        navController = navController,
+                        latitude = lat,
+                        longitude = lng
+                    )
+                }
+
                 composable(BottomNavItem.Profile.route) {
                     ProfileRoute()
                 }
