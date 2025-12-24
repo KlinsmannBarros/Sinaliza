@@ -1,9 +1,7 @@
 plugins {
-
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-
 }
 
 android {
@@ -20,7 +18,6 @@ android {
         compose = true
     }
 
-
     kotlinOptions {
         jvmTarget = "11"
     }
@@ -32,39 +29,35 @@ android {
 }
 
 dependencies {
-    implementation(project(":core-ui"))
     implementation(project(":core"))
+    implementation(project(":core-ui"))
 
-    // Use the version catalog (libs) for all dependencies
-
-    // Compose BOM - This imports the correct versions for all Compose libraries
+    // --- Compose ---
     implementation(platform(libs.androidx.compose.bom))
-
-    // Compose dependencies (versions are managed by the BOM)
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.icons.extended)
 
-    // Navigation
+    // --- Navigation (only if NavHost is used) ---
     implementation(libs.navigation.compose)
 
-    // Lifecycle / ViewModel
+    // --- Lifecycle ---
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
 
-    // Coroutines
+    // --- Coroutines ---
     implementation(libs.kotlinx.coroutines.core)
 
-    // AndroidX Core
+    // --- AndroidX ---
     implementation(libs.androidx.core.ktx)
 
-    // Google Maps & Location
+    // --- Google Maps ---
     implementation(libs.play.services.maps)
-    implementation(libs.maps.compose)
     implementation(libs.play.services.location)
+    implementation(libs.maps.compose)
 
-    // Debug
+    // --- Debug ---
     debugImplementation(libs.androidx.compose.ui.tooling)
 }

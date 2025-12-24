@@ -1,7 +1,7 @@
 plugins {
-    id("com.android.library")
-    id("org.jetbrains.kotlin.android")
-    id("org.jetbrains.kotlin.plugin.compose")
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.compose)
 }
 
 android {
@@ -18,12 +18,6 @@ android {
         compose = true
     }
 
-    composeOptions {
-        // Compose compiler extension compatible with Compose UI versions used below
-        kotlinCompilerExtensionVersion = "1.5.14"
-    }
-
-    // Use kotlinOptions for broad AGP compatibility (safe)
     kotlinOptions {
         jvmTarget = "11"
     }
@@ -45,18 +39,23 @@ android {
 }
 
 dependencies {
-    implementation(project(":core-ui"))
     implementation(project(":core"))
+    implementation(project(":core-ui"))
 
+    // Compose BOM
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.compose.ui.tooling.preview)
 
+    // Lifecycle
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.runtime.ktx)
 
+    // Coroutines & Core
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.androidx.core.ktx)
+
+    // Navigation (runtime only, no UI)
     implementation(libs.androidx.navigation.runtime.ktx)
 }

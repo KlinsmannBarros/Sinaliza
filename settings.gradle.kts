@@ -1,12 +1,6 @@
 pluginManagement {
     repositories {
-        google {
-            content {
-                includeGroupByRegex("com\\.android.*")
-                includeGroupByRegex("com\\.google.*")
-                includeGroupByRegex("androidx.*")
-            }
-        }
+        google()
         mavenCentral()
         gradlePluginPortal()
     }
@@ -25,9 +19,11 @@ rootProject.name = "Sinaliza"
 // App module
 include(":app")
 
-
+// Core modules
 include(":core")
 include(":core-ui")
+
+// Feature modules
 include(":feature-home")
 include(":feature-report")
 include(":feature-map")
