@@ -1,13 +1,12 @@
 plugins {
-    alias(libs.plugins.android.library)
-    alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.ksp)
+    id("com.android.library")
+    id("org.jetbrains.kotlin.android")
+    id("com.google.devtools.ksp")
 }
-
 
 android {
     namespace = "com.example.core"
-    compileSdk = 36
+    compileSdk = 35
 
     defaultConfig {
         minSdk = 24
@@ -32,6 +31,7 @@ android {
 
     kotlinOptions {
         jvmTarget = "11"
+        freeCompilerArgs += "-Xjvm-default=all"
     }
 }
 
@@ -42,7 +42,7 @@ dependencies {
 
     implementation(libs.kotlinx.coroutines.core)
 
-    // Room (KSP – correct)
+    // Room (KSP)
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)

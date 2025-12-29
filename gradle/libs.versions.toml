@@ -1,7 +1,10 @@
 [versions]
 # ---------- TOOLING ----------
-agp = "8.13.2"
+agp = "8.5.2"
 kotlin = "2.2.20"
+
+# ---------- KSP (MATCHES KOTLIN) ----------
+ksp = "2.2.20-1.0.25"
 
 # ---------- COMPOSE ----------
 composeBom = "2024.05.00"
@@ -9,7 +12,7 @@ composeBom = "2024.05.00"
 # ---------- ANDROIDX ----------
 coreKtx = "1.13.1"
 appcompat = "1.7.1"
-material = "1.13.0"
+material = "1.12.0"
 
 # ---------- LIFECYCLE ----------
 lifecycleRuntimeKtx = "2.8.0"
@@ -41,22 +44,20 @@ android-application = { id = "com.android.application", version.ref = "agp" }
 android-library     = { id = "com.android.library", version.ref = "agp" }
 kotlin-android      = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 
-# ✅ Compose plugin MUST match Kotlin version
+# ✅ REQUIRED FOR COMPOSE + KOTLIN 2.x
 kotlin-compose      = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 
-# ✅ KSP — NO VERSION (CRITICAL)
-ksp                 = { id = "com.google.devtools.ksp" }
+# ✅ REQUIRED FOR ROOM (KSP)
+ksp                 = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 
 
 [libraries]
 # ---------- COMPOSE ----------
 androidx-compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeBom" }
-
 androidx-compose-ui = { module = "androidx.compose.ui:ui" }
 androidx-compose-material3 = { module = "androidx.compose.material3:material3" }
 androidx-compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
 androidx-compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
-
 androidx-compose-foundation = { module = "androidx.compose.foundation:foundation" }
 androidx-compose-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
 
