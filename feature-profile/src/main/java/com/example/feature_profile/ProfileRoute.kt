@@ -14,7 +14,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Notifications
@@ -172,7 +172,7 @@ private fun ProfileMenuItem(
 
             IconButton(onClick = onClick) {
                 Icon(
-                    Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    Icons.Filled.KeyboardArrowRight,
                     contentDescription = "Open"
                 )
             }

@@ -1,7 +1,6 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.compose)
 }
 
 android {
@@ -18,6 +17,10 @@ android {
         compose = true
     }
 
+    composeOptions {
+        kotlinCompilerExtensionVersion = libs.versions.composeCompiler.get()
+    }
+
     kotlinOptions {
         jvmTarget = "11"
     }
@@ -29,11 +32,12 @@ android {
 }
 
 dependencies {
+    // compiler is provided via composeOptions/resolutionStrategy
+
     implementation(project(":core"))
     implementation(project(":core-ui"))
 
     // --- Compose ---
-    implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.material3)
@@ -53,10 +57,11 @@ dependencies {
     // --- AndroidX ---
     implementation(libs.androidx.core.ktx)
 
-    // --- Google Maps ---
-    implementation(libs.play.services.maps)
+    // --- Google Maps (MapView) ---
+    implementation(libs.play.services.maps) {
+        exclude(group = "com.google.maps.android", module = "maps-compose")
+    }
     implementation(libs.play.services.location)
-    implementation(libs.maps.compose)
 
     // --- Debug ---
     debugImplementation(libs.androidx.compose.ui.tooling)

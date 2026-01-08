@@ -1,13 +1,16 @@
 [versions]
 # ---------- TOOLING ----------
-agp = "8.5.2"
-kotlin = "2.2.20"
+agp = "8.13.2"
+# Use Kotlin 1.9.25 (reverted) to match project tooling; we'll add a compiler flag to skip metadata checks
+kotlin = "1.9.25"
 
-# ---------- KSP (MATCHES KOTLIN) ----------
-ksp = "2.2.20-1.0.25"
+# ---------- COMPOSE (pinned explicit versions) ----------
+compose = "1.5.15"
+composeCompiler = "1.5.15"
+composeMaterial3 = "1.1.1"
 
-# ---------- COMPOSE ----------
-composeBom = "2024.05.00"
+# Icons (material-icons-extended has historically been published at 1.4.1)
+iconsExtended = "1.4.1"
 
 # ---------- ANDROIDX ----------
 coreKtx = "1.13.1"
@@ -31,7 +34,7 @@ room = "2.6.1"
 # ---------- MAPS ----------
 playServicesMaps = "19.2.0"
 playServicesLocation = "21.3.0"
-mapsCompose = "6.12.2"
+mapsCompose = "6.10.0"
 
 # ---------- TESTING ----------
 junit = "4.13.2"
@@ -44,22 +47,21 @@ android-application = { id = "com.android.application", version.ref = "agp" }
 android-library     = { id = "com.android.library", version.ref = "agp" }
 kotlin-android      = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 
-# ✅ REQUIRED FOR COMPOSE + KOTLIN 2.x
-kotlin-compose      = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+# Removed kotlin-compose plugin alias — configure Compose via composeOptions and dependencies instead
 
-# ✅ REQUIRED FOR ROOM (KSP)
-ksp                 = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+# KAPT plugin alias kept for KAPT usage
+kapt                = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin" }
 
 
 [libraries]
-# ---------- COMPOSE ----------
-androidx-compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeBom" }
-androidx-compose-ui = { module = "androidx.compose.ui:ui" }
-androidx-compose-material3 = { module = "androidx.compose.material3:material3" }
-androidx-compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
-androidx-compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
-androidx-compose-foundation = { module = "androidx.compose.foundation:foundation" }
-androidx-compose-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
+# ---------- COMPOSE (explicit versions) ----------
+androidx-compose-ui = { module = "androidx.compose.ui:ui", version.ref = "compose" }
+androidx-compose-material3 = { module = "androidx.compose.material3:material3", version.ref = "composeMaterial3" }
+androidx-compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview", version.ref = "compose" }
+androidx-compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = "compose" }
+androidx-compose-foundation = { module = "androidx.compose.foundation:foundation", version.ref = "compose" }
+androidx-compose-icons-extended = { module = "androidx.compose.material:material-icons-extended", version.ref = "iconsExtended" }
+androidx-compose-compiler = { module = "androidx.compose.compiler:compiler", version.ref = "composeCompiler" }
 
 # ---------- CORE ----------
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }

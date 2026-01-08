@@ -1,26 +1,24 @@
 package com.example.sinaliza.feature.map
 
-import androidx.compose.foundation.layout.Arrangement
+import android.Manifest
+import android.annotation.SuppressLint
+import android.content.pm.PackageManager
+import android.location.Location
+import android.os.Bundle
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,33 +27,22 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.navigation.NavController
-import com.example.core.Report
 import com.example.core.ReportRepository
-import com.example.core.toReport
-import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.MapView
+import com.google.android.gms.maps.MapsInitializer
 import com.google.android.gms.maps.model.LatLng
-import com.google.maps.android.compose.GoogleMap
-import com.google.maps.android.compose.MapProperties
-import com.google.maps.android.compose.MapUiSettings
-import com.google.maps.android.compose.Marker
-import com.google.maps.android.compose.MarkerState
-import com.google.maps.android.compose.rememberCameraPositionState
-
-// ---------------- SAMPLE DEMO MARKERS ----------------
-
-data class SampleMarker(
-    val title: String,
-    val snippet: String,
-    val latLng: LatLng
-)
-
-private val sampleMarkers = listOf(
-    SampleMarker("Pothole", "Rua A near building 10", LatLng(38.726, -9.140)),
-    SampleMarker("Streetlight down", "Block 7", LatLng(38.727, -9.142)),
-    SampleMarker("Illegal dumping", "Park area", LatLng(38.724, -9.138))
-)
+import com.google.android.gms.maps.model.MarkerOptions
 
 // ---------------- MAP ROUTE ----------------
 
@@ -64,181 +51,222 @@ fun MapRoute(
     navController: NavController
 ) {
     val context = LocalContext.current
-    val repository = remember { ReportRepository(context) }
+    val mapView = rememberMapViewWithLifecycle()
 
+    // Fused location client
+    val fusedLocationClient: FusedLocationProviderClient = remember {
+        LocationServices.getFusedLocationProviderClient(context)
+    }
+
+    // Runtime permission state
+    val initialPermission = ContextCompat.checkSelfPermission(
+        context,
+        Manifest.permission.ACCESS_FINE_LOCATION
+    ) == PackageManager.PERMISSION_GRANTED
+
+    var permissionGranted by remember { mutableStateOf(initialPermission) }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted: Boolean ->
+        permissionGranted = granted
+    }
+
+    // Load reports from repository (collect Flow as state)
+    val repository = remember { ReportRepository(context) }
     val reportEntities by repository
         .getReports()
         .collectAsState(initial = emptyList())
 
-    val reports = remember(reportEntities) {
-        reportEntities.map { it.toReport() }
-    }
-
-    val startLocation = LatLng(38.726, -9.140)
-
-    val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(startLocation, 14f)
-    }
-
-    var selectedSampleMarker by remember { mutableStateOf<SampleMarker?>(null) }
-    var selectedReport by remember { mutableStateOf<Report?>(null) }
+    // Hold a reference to the GoogleMap when it's ready so we can update location layer later
+    // Use Compose state instead of kotlin.jvm.internal.Ref.ObjectRef
+    val googleMapRef = remember { mutableStateOf<GoogleMap?>(null) }
 
     Box(modifier = Modifier.fillMaxSize()) {
+        AndroidView(factory = { _ -> mapView }, modifier = Modifier.fillMaxSize(), update = { mapView ->
+             // Ensure Google Maps system is initialized
+             MapsInitializer.initialize(context)
 
-        GoogleMap(
-            modifier = Modifier.fillMaxSize(),
-            cameraPositionState = cameraPositionState,
-            properties = MapProperties(isMyLocationEnabled = false),
-            uiSettings = MapUiSettings(
-                zoomControlsEnabled = false,
-                myLocationButtonEnabled = false
-            ),
-            onMapLongClick = { latLng ->
-                navController.navigate(
-                    "report?lat=${latLng.latitude}&lng=${latLng.longitude}"
+             mapView.getMapAsync { googleMap ->
+                googleMapRef.value = googleMap
+
+                // Basic UI settings
+                googleGoogleMapUiSettingsSafe(googleMap)
+
+                val startLocation = LatLng(38.726, -9.140)
+                googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(startLocation, 14f))
+
+                // Add sample marker
+                googleMap.addMarker(
+                    MarkerOptions()
+                        .position(startLocation)
+                        .title("Sample location")
                 )
-            }
-        ) {
 
-            // 🔹 SAMPLE MARKERS
-            sampleMarkers.forEach { marker ->
-                Marker(
-                    state = MarkerState(marker.latLng),
-                    title = marker.title,
-                    snippet = marker.snippet,
-                    onClick = {
-                        selectedSampleMarker = marker
-                        selectedReport = null
+                // Add user's reports as markers
+                reportEntities.forEach { entity ->
+                    val latLng = LatLng(entity.latitude, entity.longitude)
+                    googleMap.addMarker(
+                        MarkerOptions()
+                            .position(latLng)
+                            .title(entity.title)
+                            .snippet(entity.description)
+                    )
+                }
 
-                        cameraPositionState.position =
-                            CameraPosition.fromLatLngZoom(marker.latLng, 16f)
+                // Set location layer based on current permission --- check at call site to satisfy lint
+                val hasLocationPermission = ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                ) == PackageManager.PERMISSION_GRANTED
 
-                        false
+                if (hasLocationPermission) {
+                    try {
+                        setMyLocationEnabledSafe(googleMap, permissionGranted)
+                    } catch (_: SecurityException) {
+                        // ignore if permission not granted at runtime
                     }
-                )
-            }
+                }
 
-            // 🔹 USER REPORT MARKERS
-            reports.forEach { report ->
-                Marker(
-                    state = MarkerState(
-                        LatLng(report.latitude, report.longitude)
-                    ),
-                    title = report.title,
-                    snippet = report.description,
-                    onClick = {
-                        selectedSampleMarker = null
-                        selectedReport = report
-                        false
-                    }
-                )
+                // Attach long-press listener to start Report flow
+                googleMap.setOnMapLongClickListener { latLng ->
+                    navController.navigate("report?lat=${latLng.latitude}&lng=${latLng.longitude}")
+                }
+            }
+        })
+
+        // If permission is not granted show a small button to request it
+        if (!permissionGranted) {
+            Box(modifier = Modifier.align(Alignment.TopCenter).padding(12.dp)) {
+                Button(onClick = { permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION) }) {
+                    Text("Enable location")
+                }
             }
         }
 
-        // ---------------- RESET CAMERA ----------------
-
+        // Floating button to center: if permission granted -> center on last location, else -> center on start
         FloatingActionButton(
+            onClick = {
+                val gmap = googleMapRef.value
+                if (gmap != null) {
+                    // Make an explicit permission check before calling getLastLocation
+                    val hasLocationPermissionClick = ContextCompat.checkSelfPermission(
+                        context,
+                        Manifest.permission.ACCESS_FINE_LOCATION
+                    ) == PackageManager.PERMISSION_GRANTED
+
+                    if (permissionGranted && hasLocationPermissionClick) {
+                        try {
+                            getLastLocationSafe(fusedLocationClient) { loc: Location? ->
+                                if (loc != null) {
+                                    val userLatLng = LatLng(loc.latitude, loc.longitude)
+                                    gmap.animateCamera(CameraUpdateFactory.newLatLngZoom(userLatLng, 15f))
+                                } else {
+                                    // fallback to default
+                                    val startLocation = LatLng(38.726, -9.140)
+                                    gmap.animateCamera(CameraUpdateFactory.newLatLngZoom(startLocation, 14f))
+                                }
+                            }
+                        } catch (_: SecurityException) {
+                            // ignore
+                        }
+                    } else if (!permissionGranted) {
+                        val startLocation = LatLng(38.726, -9.140)
+                        gmap.animateCamera(CameraUpdateFactory.newLatLngZoom(startLocation, 14f))
+                    }
+                }
+            },
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(16.dp),
-            onClick = {
-                cameraPositionState.position =
-                    CameraPosition.fromLatLngZoom(startLocation, 14f)
-            }
+                .padding(16.dp)
         ) {
             Icon(Icons.Default.MyLocation, contentDescription = "Reset")
         }
-
-        // ---------------- SAMPLE DETAILS ----------------
-
-        selectedSampleMarker?.let { marker ->
-            MarkerBottomCard(
-                title = marker.title,
-                description = marker.snippet,
-                onClose = { selectedSampleMarker = null },
-                onCenter = {
-                    cameraPositionState.position =
-                        CameraPosition.fromLatLngZoom(marker.latLng, 16f)
-                }
-            )
-        }
-
-        // ---------------- REPORT DETAILS ----------------
-
-        selectedReport?.let { report ->
-            SimpleBottomCard(
-                title = report.title,
-                onClose = { selectedReport = null }
-            )
-        }
     }
-}
 
-// ---------------- UI CARDS ----------------
+    // React to permission changes and enable/disable MyLocation on the map
+    LaunchedEffect(permissionGranted) {
+        val gmap = googleMapRef.value
+        if (gmap != null) {
+            val hasLocationPermissionLaunched = ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
 
-@Composable
-private fun MarkerBottomCard(
-    title: String,
-    description: String,
-    onClose: () -> Unit,
-    onCenter: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(120.dp)
-            .padding(12.dp),
-        elevation = CardDefaults.cardElevation(8.dp),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(title, style = MaterialTheme.typography.titleMedium)
-                    Text(
-                        description,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                IconButton(onClick = onClose) {
-                    Icon(Icons.Default.Close, contentDescription = "Close")
+            if (hasLocationPermissionLaunched) {
+                try {
+                    setMyLocationEnabledSafe(gmap, permissionGranted)
+                } catch (_: SecurityException) {
+                    // ignore
                 }
             }
 
-            Button(onClick = onCenter) {
-                Text("Center on map")
+            // If permission was just granted, attempt to move camera to last location
+            if (permissionGranted && hasLocationPermissionLaunched) {
+                try {
+                    getLastLocationSafe(fusedLocationClient) { loc: Location? ->
+                        if (loc != null) {
+                            val userLatLng = LatLng(loc.latitude, loc.longitude)
+                            gmap.animateCamera(CameraUpdateFactory.newLatLngZoom(userLatLng, 15f))
+                        }
+                    }
+                } catch (_: SecurityException) {
+                    // ignore
+                }
             }
         }
     }
 }
 
+// Small helper to set UI settings safely (keeps main code concise)
+private fun googleGoogleMapUiSettingsSafe(googleMap: GoogleMap) {
+    googleMap.uiSettings.isMapToolbarEnabled = false
+    googleMap.uiSettings.isZoomControlsEnabled = true
+}
+
 @Composable
-private fun SimpleBottomCard(
-    title: String,
-    onClose: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(12.dp),
-        elevation = CardDefaults.cardElevation(6.dp),
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Row(
-            modifier = Modifier.padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(title, modifier = Modifier.weight(1f))
-            IconButton(onClick = onClose) {
-                Icon(Icons.Default.Close, contentDescription = "Close")
+fun rememberMapViewWithLifecycle(): MapView {
+    val context = LocalContext.current
+    val mapView = remember { MapView(context) }
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    val mapViewOnCreateBundle = remember { Bundle() }
+
+    DisposableEffect(lifecycle) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_START -> mapView.onStart()
+                Lifecycle.Event.ON_RESUME -> mapView.onResume()
+                Lifecycle.Event.ON_PAUSE -> mapView.onPause()
+                Lifecycle.Event.ON_STOP -> mapView.onStop()
+                Lifecycle.Event.ON_DESTROY -> mapView.onDestroy()
+                else -> {}
             }
         }
+        lifecycle.addObserver(observer)
+        onDispose {
+            lifecycle.removeObserver(observer)
+            mapView.onDestroy()
+        }
+    }
+
+    // Ensure the MapView has been created
+    LaunchedEffect(mapView) {
+        mapView.onCreate(mapViewOnCreateBundle)
+    }
+
+    return mapView
+}
+
+// Helper wrappers to call APIs that require location permission. These are annotated to suppress
+// the lint 'MissingPermission' error because we call them only after an explicit permission check.
+@SuppressLint("MissingPermission")
+private fun setMyLocationEnabledSafe(googleMap: GoogleMap, enabled: Boolean) {
+    googleMap.isMyLocationEnabled = enabled
+}
+
+@SuppressLint("MissingPermission")
+private fun getLastLocationSafe(fused: FusedLocationProviderClient, callback: (Location?) -> Unit) {
+    fused.lastLocation.addOnSuccessListener { loc: Location? ->
+        callback(loc)
     }
 }

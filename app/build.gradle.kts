@@ -3,7 +3,6 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.compose)
 }
 
 
@@ -42,12 +41,18 @@ android {
         compose = true
     }
 
+    composeOptions {
+        kotlinCompilerExtensionVersion = libs.versions.composeCompiler.get()
+    }
+
     kotlinOptions {
         jvmTarget = "11"
     }
 }
 
 dependencies {
+
+    // compiler is provided via composeOptions/resolutionStrategy, remove explicit implementation
 
     // ---------------- PROJECT MODULES ----------------
     implementation(project(":core"))
@@ -57,8 +62,7 @@ dependencies {
     implementation(project(":feature-map"))
     implementation(project(":feature-profile"))
 
-    // ---------------- COMPOSE ----------------
-    implementation(platform(libs.androidx.compose.bom))
+    // ---------------- COMPOSE (explicit pinned libs) ----------------
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.foundation)
     implementation(libs.androidx.compose.material3)
@@ -83,7 +87,8 @@ dependencies {
     implementation(libs.material)
 
     // ---------------- MAPS ----------------
-    implementation(libs.play.services.maps)
-    implementation(libs.maps.compose)
+    implementation(libs.play.services.maps) {
+        exclude(group = "com.google.maps.android", module = "maps-compose")
+    }
     implementation(libs.play.services.location)
 }
