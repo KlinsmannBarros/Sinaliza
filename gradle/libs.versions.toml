@@ -1,12 +1,13 @@
 [versions]
 # ---------- TOOLING ----------
 agp = "8.13.2"
-# Use Kotlin 1.9.25 (reverted) to match project tooling; we'll add a compiler flag to skip metadata checks
-kotlin = "1.9.25"
+# Use Kotlin 1.9.20 (keep current Kotlin; compose compiler will be aligned below)
+kotlin = "1.9.20"
 
-# ---------- COMPOSE (pinned explicit versions) ----------
-compose = "1.5.15"
-composeCompiler = "1.5.15"
+# ---------- COMPOSE (aligned stable set)
+# Using a known-published Compose 1.5.x series and matching compiler which is compatible with Kotlin 1.9.x
+compose = "1.5.5"
+composeCompiler = "1.5.5"
 composeMaterial3 = "1.1.1"
 
 # Icons (material-icons-extended has historically been published at 1.4.1)

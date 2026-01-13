@@ -29,8 +29,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.navigation.NavController
@@ -43,8 +43,7 @@ import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.MapsInitializer
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
-
-// ---------------- MAP ROUTE ----------------
+import kotlinx.coroutines.flow.collect
 
 @Composable
 fun MapRoute(
@@ -251,7 +250,14 @@ fun rememberMapViewWithLifecycle(): MapView {
 
     // Ensure the MapView has been created
     LaunchedEffect(mapView) {
-        mapView.onCreate(mapViewOnCreateBundle)
+        // Call MapView.onCreate safely. Passing null is fine for our usage;
+        // we avoid reflection into private fields which may not exist on some Maps SDK versions.
+        try {
+            mapView.onCreate(null)
+        } catch (e: Exception) {
+            // Log and fallback to safe no-op
+            android.util.Log.w("MapRoute", "mapView.onCreate failed: $e")
+        }
     }
 
     return mapView

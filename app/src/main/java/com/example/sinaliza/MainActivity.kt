@@ -3,11 +3,14 @@ package com.example.sinaliza
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -22,14 +25,46 @@ import com.example.sinaliza.feature.home.HomeRoute
 import com.example.sinaliza.feature.map.MapRoute
 import com.example.sinaliza.feature.profile.ProfileRoute
 import com.example.sinaliza.feature.report.ReportRoute
+import android.util.Log
+import java.io.File
+import java.io.PrintWriter
+import java.io.StringWriter
 
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Install a default uncaught exception handler that writes the stacktrace to a file
+        val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { thread, ex ->
+            try {
+                val sw = StringWriter()
+                val pw = PrintWriter(sw)
+                ex.printStackTrace(pw)
+                pw.flush()
+                val text = sw.toString()
+                val file = File(applicationContext.filesDir, "crash_${System.currentTimeMillis()}.txt")
+                file.writeText(text)
+                Log.e("MainActivity", "Wrote crash log to ${file.absolutePath}")
+            } catch (_: Throwable) {
+                // ignore
+            }
+            // Delegate to original handler to let the system handle the crash as usual
+            defaultHandler?.uncaughtException(thread, ex)
+        }
+
         super.onCreate(savedInstanceState)
 
         setContent {
             MyApp()
+        }
+    }
+}
+
+@Composable
+fun MinimalStartupProbe() {
+    androidx.compose.material3.Surface(modifier = Modifier.fillMaxSize(), color = Color(0xFFEEEEEE)) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
+            androidx.compose.material3.Text(text = "MINIMAL STARTUP - Compose is running", color = Color.Black)
         }
     }
 }
@@ -68,53 +103,81 @@ fun MyApp() {
             }
         ) { innerPadding ->
 
-            NavHost(
-                navController = navController,
-                startDestination = BottomNavItem.Home.route,
-                modifier = Modifier.padding(innerPadding)
-            ) {
+            // DEBUG: temporary bypass to render HomeRoute directly.
+            // This helps determine whether NavHost/destination composables are responsible for the black screen.
+            // Set to false to restore normal NavHost behavior.
+            val debugBypassNav = false
 
-                composable(BottomNavItem.Home.route) {
-                    HomeRoute()
-                }
+            if (debugBypassNav) {
+                // Visible debug overlay to confirm Compose rendering
+                DebugVisibilityProbe()
+                HomeRoute()
+            } else {
+                NavHost(
+                    navController = navController,
+                    startDestination = BottomNavItem.Home.route,
+                    modifier = Modifier.padding(innerPadding)
+                ) {
 
-                composable(BottomNavItem.Map.route) {
-                    MapRoute(navController)
-                }
+                    composable(BottomNavItem.Home.route) {
+                        HomeRoute()
+                    }
 
-                composable(
-                    route = "report?lat={lat}&lng={lng}",
-                    arguments = listOf(
-                        navArgument("lat") {
-                            type = NavType.StringType
-                            nullable = true
-                        },
-                        navArgument("lng") {
-                            type = NavType.StringType
-                            nullable = true
-                        }
-                    )
-                ) { backStackEntry ->
+                    composable(BottomNavItem.Map.route) {
+                        MapRoute(navController)
+                    }
 
-                    val lat = backStackEntry.arguments
-                        ?.getString("lat")
-                        ?.toDoubleOrNull()
+                    composable(
+                        route = "report?lat={lat}&lng={lng}",
+                        arguments = listOf(
+                            navArgument("lat") {
+                                type = NavType.StringType
+                                nullable = true
+                            },
+                            navArgument("lng") {
+                                type = NavType.StringType
+                                nullable = true
+                            }
+                        )
+                    ) { backStackEntry ->
 
-                    val lng = backStackEntry.arguments
-                        ?.getString("lng")
-                        ?.toDoubleOrNull()
+                        val lat = backStackEntry.arguments
+                            ?.getString("lat")
+                            ?.toDoubleOrNull()
 
-                    ReportRoute(
-                        navController = navController,
-                        latitude = lat,
-                        longitude = lng
-                    )
-                }
+                        val lng = backStackEntry.arguments
+                            ?.getString("lng")
+                            ?.toDoubleOrNull()
 
-                composable(BottomNavItem.Profile.route) {
-                    ProfileRoute()
+                        ReportRoute(
+                            navController = navController,
+                            latitude = lat,
+                            longitude = lng
+                        )
+                    }
+
+                    composable(BottomNavItem.Profile.route) {
+                        ProfileRoute()
+                    }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun DebugVisibilityProbe() {
+    // This draws a thin banner at the top so we can see whether Compose is rendering
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(24.dp)
+            .background(Color.Red)
+    ) {
+        androidx.compose.material3.Text(
+            text = "DEBUG: UI RENDERING",
+            color = Color.White,
+            modifier = Modifier.padding(start = 8.dp)
+        )
     }
 }

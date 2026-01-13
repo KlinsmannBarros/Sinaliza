@@ -24,8 +24,6 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -33,30 +31,39 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import com.example.sinaliza.feature.home.HomeReport
+import android.app.Application
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.ViewModelProvider
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeRoute() {
-    var query by remember { mutableStateOf("") }
-    var selectedCategory by remember { mutableStateOf<String?>(null) }
-
-    // Simple in-memory data; in a real app this would come from VM/repo
-    val allReports = sampleReports
-    val filtered = allReports.filter { r ->
-        (query.isBlank() || r.title.contains(query, true) || r.description.contains(query, true)) &&
-                (selectedCategory == null || selectedCategory == r.category)
+    val ctx = LocalContext.current
+    val application = ctx.applicationContext as? Application
+    if (application == null) {
+        Box(modifier = Modifier.fillMaxSize().padding(20.dp)) {
+            Text("Unable to access application context")
+        }
+        return
     }
+
+    val homeViewModel: HomeViewModel = viewModel(factory = HomeViewModelFactory(application))
+
+    val uiState by homeViewModel.uiState.collectAsState()
+    val query = uiState.query
+    val selectedCategory = uiState.selectedCategory
+    val filtered = uiState.reports
 
     Column(
         modifier = Modifier
@@ -81,7 +88,7 @@ fun HomeRoute() {
         ) {
             OutlinedTextField(
                 value = query,
-                onValueChange = { query = it },
+                onValueChange = { homeViewModel.setQuery(it) },
                 modifier = Modifier.weight(1f),
                 label = { Text("Search reports") },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) }
@@ -96,7 +103,7 @@ fun HomeRoute() {
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Category chips row (use FilterChip which is public)
+        // Category chips row (use simple fallback implementation to avoid Material3 API mismatch)
         val categories = listOf("All", "Pothole", "Lighting", "Trash")
         Row(
             modifier = Modifier
@@ -106,15 +113,10 @@ fun HomeRoute() {
         ) {
             categories.forEach { cat ->
                 val isSelected = (selectedCategory == cat) || (cat == "All" && selectedCategory == null)
-                FilterChip(
+                SimpleChip(
                     selected = isSelected,
-                    onClick = { selectedCategory = if (cat == "All") null else cat },
-                    label = { Text(cat) },
-                    colors = FilterChipDefaults.filterChipColors(
-                        selectedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.12f),
-                        selectedLabelColor = MaterialTheme.colorScheme.primary,
-                        containerColor = MaterialTheme.colorScheme.surfaceVariant
-                    )
+                    onClick = { homeViewModel.setSelectedCategory(if (cat == "All") null else cat) },
+                    label = cat
                 )
             }
         }
@@ -129,7 +131,7 @@ fun HomeRoute() {
             contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            items(filtered) { report ->
+            items(filtered) { report: HomeReport ->
                 ReportCard(report = report, onClick = { /* TODO: open detail */ })
             }
         }
@@ -137,7 +139,7 @@ fun HomeRoute() {
 }
 
 @Composable
-private fun ReportCard(report: Report, onClick: () -> Unit) {
+private fun ReportCard(report: HomeReport, onClick: () -> Unit) {
     ElevatedCard(
         modifier = Modifier
             .fillMaxWidth()
@@ -156,7 +158,7 @@ private fun ReportCard(report: Report, onClick: () -> Unit) {
                 Image(
                     painter = ColorPainter(Color(0xFFBFD9FF)),
                     contentDescription = null,
-                    modifier = Modifier.matchParentSize(),
+                    modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
                 )
             }
@@ -177,12 +179,20 @@ private fun ReportCard(report: Report, onClick: () -> Unit) {
     }
 }
 
-private val sampleReports = listOf(
-    Report("Pothole on Rua A", "Large pothole near building 10", "Pothole", "2025-10-30"),
-    Report("Streetlight down", "Lamp not working in block 7", "Lighting", "2025-10-23"),
-    Report("Illegal dumping in park", "Trash near the playground", "Trash", "2025-09-11"),
-    Report("Cracked sidewalk", "Trip hazard on main walkway", "Pothole", "2025-08-01"),
-    Report("Broken bench", "Wooden bench slats broken in square", "Infrastructure", "2025-07-14")
-)
+@Composable
+private fun SimpleChip(selected: Boolean, onClick: () -> Unit, label: String) {
+    val background = if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surfaceVariant
+    val contentColor = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
 
-data class Report(val title: String, val description: String, val category: String, val date: String)
+    androidx.compose.material3.Surface(
+        color = background,
+        shape = MaterialTheme.shapes.small,
+        modifier = Modifier
+            .clip(MaterialTheme.shapes.small)
+            .clickable { onClick() }
+    ) {
+        Row(modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(text = label, color = contentColor)
+        }
+    }
+}

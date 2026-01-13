@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -99,25 +100,46 @@ fun ReportRoute(
 
         Spacer(Modifier.height(24.dp))
 
-        Button(
-            enabled = canSubmit,
-            modifier = Modifier.fillMaxWidth(),
-            onClick = {
-                scope.launch {
-                    repository.addReport(
-                        Report(
-                            id = UUID.randomUUID().toString(),
-                            title = title,
-                            description = description,
-                            latitude = latitude!!,
-                            longitude = longitude!!
+        // Buttons row: Submit + Cancel
+        Row(modifier = Modifier.fillMaxWidth()) {
+            Button(
+                enabled = canSubmit,
+                modifier = Modifier.weight(1f),
+                onClick = {
+                    scope.launch {
+                        repository.addReport(
+                            Report(
+                                id = UUID.randomUUID().toString(),
+                                title = title.ifBlank { "Untitled" },
+                                description = description.ifBlank { "" },
+                                latitude = latitude ?: 0.0,
+                                longitude = longitude ?: 0.0
+                            )
                         )
-                    )
+
+                        // Notify the previous back stack entry (e.g. MapRoute) that a report was submitted
+                        navController.previousBackStackEntry?.savedStateHandle?.set("report_saved", true)
+
+                        // Pop back to previous screen
+                        navController.popBackStack()
+                    }
+                }
+            ) {
+                Text("Submit Report")
+            }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Button(
+                modifier = Modifier.weight(1f),
+                onClick = {
+                    // Notify previous back stack entry that the report flow was canceled
+                    navController.previousBackStackEntry?.savedStateHandle?.set("report_canceled", true)
                     navController.popBackStack()
                 }
+            ) {
+                Text("Cancel")
             }
-        ) {
-            Text("Submit Report")
         }
     }
 }

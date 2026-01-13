@@ -28,6 +28,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -35,7 +38,14 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun ProfileRoute() {
+fun ProfileRoute(profileViewModel: ProfileViewModel = viewModel()) {
+    val state by profileViewModel.state.collectAsState()
+    val name = state.name
+    val email = state.email
+    val reportsCount = state.reportsCount.toString()
+    val upvotes = state.upvotes.toString()
+    val joined = state.joinedYear.toString()
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -71,10 +81,10 @@ fun ProfileRoute() {
         }
 
         // Name + Email
-        Text(" Random Example", style = MaterialTheme.typography.headlineSmall)
+        Text(name, style = MaterialTheme.typography.headlineSmall)
         Spacer(modifier = Modifier.height(6.dp))
         Text(
-            "random@example.com",
+            email,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -88,9 +98,9 @@ fun ProfileRoute() {
                 .padding(horizontal = 4.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            ProfileStatCard(modifier = Modifier.weight(1f), count = "12", label = "Reports")
-            ProfileStatCard(modifier = Modifier.weight(1f), count = "34", label = "Upvotes")
-            ProfileStatCard(modifier = Modifier.weight(1f), count = "2024", label = "Joined")
+            ProfileStatCard(modifier = Modifier.weight(1f), count = reportsCount, label = "Reports")
+            ProfileStatCard(modifier = Modifier.weight(1f), count = upvotes, label = "Upvotes")
+            ProfileStatCard(modifier = Modifier.weight(1f), count = joined, label = "Joined")
         }
 
         Spacer(modifier = Modifier.height(20.dp))
@@ -129,7 +139,7 @@ private fun ProfileStatCard(modifier: Modifier = Modifier, count: String, label:
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
-        Column(
+        androidx.compose.foundation.layout.Column(
             modifier = Modifier.padding(vertical = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {

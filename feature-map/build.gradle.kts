@@ -1,10 +1,11 @@
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
+    id("kotlin-parcelize")
 }
 
 android {
-    namespace = "com.example.sinaliza.feature.map"
+    namespace = "com.example.feature_map"
     compileSdk = 36
 
     defaultConfig {
@@ -32,8 +33,6 @@ android {
 }
 
 dependencies {
-    // compiler is provided via composeOptions/resolutionStrategy
-
     implementation(project(":core"))
     implementation(project(":core-ui"))
 
@@ -44,7 +43,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.icons.extended)
 
-    // --- Navigation (only if NavHost is used) ---
+    // --- Navigation ---
     implementation(libs.navigation.compose)
 
     // --- Lifecycle ---
@@ -57,11 +56,10 @@ dependencies {
     // --- AndroidX ---
     implementation(libs.androidx.core.ktx)
 
-    // --- Google Maps (MapView) ---
-    implementation(libs.play.services.maps) {
-        exclude(group = "com.google.maps.android", module = "maps-compose")
-    }
+    // --- Google Maps ---
+    implementation(libs.play.services.maps)
     implementation(libs.play.services.location)
+    implementation(libs.maps.compose)
 
     // --- Debug ---
     debugImplementation(libs.androidx.compose.ui.tooling)
