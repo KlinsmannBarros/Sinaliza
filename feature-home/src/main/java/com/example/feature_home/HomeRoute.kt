@@ -41,14 +41,17 @@ import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import com.example.sinaliza.feature.home.HomeReport
 import android.app.Application
 import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.ViewModelProvider
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeRoute() {
+fun HomeRoute(onViewOnMap: (Double, Double) -> Unit = { _, _ -> }) {
     val ctx = LocalContext.current
     val application = ctx.applicationContext as? Application
     if (application == null) {
@@ -64,6 +67,9 @@ fun HomeRoute() {
     val query = uiState.query
     val selectedCategory = uiState.selectedCategory
     val filtered = uiState.reports
+
+    // selected report for popup
+    var selectedReport by remember { mutableStateOf<HomeReport?>(null) }
 
     Column(
         modifier = Modifier
@@ -132,9 +138,43 @@ fun HomeRoute() {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(filtered) { report: HomeReport ->
-                ReportCard(report = report, onClick = { /* TODO: open detail */ })
+                ReportCard(report = report, onClick = { selectedReport = report })
             }
         }
+    }
+
+    // Popup dialog to show details and actions for selected report
+    if (selectedReport != null) {
+        val r = selectedReport!!
+        AlertDialog(
+            onDismissRequest = { selectedReport = null },
+            title = { Text(text = r.title) },
+            text = {
+                Column {
+                    Text(text = r.description)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(text = "Date: ${r.date}")
+                    Text(text = "Lat: ${r.latitude}, Lng: ${r.longitude}")
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    // call out to parent to show on map
+                    try {
+                        onViewOnMap(r.latitude, r.longitude)
+                    } catch (_: Exception) {
+                    }
+                    selectedReport = null
+                }) {
+                    Text("View on map")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { selectedReport = null }) {
+                    Text("Close")
+                }
+            }
+        )
     }
 }
 

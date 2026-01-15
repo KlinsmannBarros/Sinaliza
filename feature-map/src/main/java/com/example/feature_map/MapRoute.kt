@@ -47,10 +47,32 @@ import kotlinx.coroutines.flow.collect
 
 @Composable
 fun MapRoute(
-    navController: NavController
+    navController: NavController,
+    centerLat: Double? = null,
+    centerLng: Double? = null
 ) {
     val context = LocalContext.current
     val mapView = rememberMapViewWithLifecycle()
+
+    // Determine effective center coordinates: prefer explicit nav args, otherwise read savedStateHandle from previous back stack entry
+    var effectiveLat: Double? = centerLat
+    var effectiveLng: Double? = centerLng
+    if (effectiveLat == null || effectiveLng == null) {
+        val prev = navController.previousBackStackEntry
+        val savedLat = prev?.savedStateHandle?.get<Double?>("center_lat")
+        val savedLng = prev?.savedStateHandle?.get<Double?>("center_lng")
+        if (savedLat != null && savedLng != null) {
+            effectiveLat = savedLat
+            effectiveLng = savedLng
+            // clear saved values so they don't persist for next navigation
+            try {
+                prev.savedStateHandle.set("center_lat", null)
+                prev.savedStateHandle.set("center_lng", null)
+            } catch (_: Exception) {
+                // ignore if clearing fails
+            }
+        }
+    }
 
     // Fused location client
     val fusedLocationClient: FusedLocationProviderClient = remember {
@@ -93,7 +115,18 @@ fun MapRoute(
                 googleGoogleMapUiSettingsSafe(googleMap)
 
                 val startLocation = LatLng(38.726, -9.140)
-                googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(startLocation, 14f))
+
+                // If effectiveCenter coords are available, move camera there, otherwise use default
+                if (effectiveLat != null && effectiveLng != null) {
+                    try {
+                        val center = LatLng(effectiveLat, effectiveLng)
+                        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(center, 14f))
+                    } catch (_: Exception) {
+                        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(startLocation, 14f))
+                    }
+                } else {
+                    googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(startLocation, 14f))
+                }
 
                 // Add sample marker
                 googleMap.addMarker(
@@ -230,33 +263,30 @@ fun rememberMapViewWithLifecycle(): MapView {
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val mapViewOnCreateBundle = remember { Bundle() }
 
+    // Call onCreate immediately so internal Maps components are initialized before lifecycle events.
+    // This avoids a race where onStart may be called before onCreate and trigger an internal NPE in
+    // some Maps SDK/Dynamite versions.
+    try {
+        mapView.onCreate(mapViewOnCreateBundle)
+    } catch (e: Exception) {
+        android.util.Log.w("MapRoute", "mapView.onCreate failed: $e")
+    }
+
     DisposableEffect(lifecycle) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
-                Lifecycle.Event.ON_START -> mapView.onStart()
-                Lifecycle.Event.ON_RESUME -> mapView.onResume()
-                Lifecycle.Event.ON_PAUSE -> mapView.onPause()
-                Lifecycle.Event.ON_STOP -> mapView.onStop()
-                Lifecycle.Event.ON_DESTROY -> mapView.onDestroy()
+                Lifecycle.Event.ON_START -> try { mapView.onStart() } catch (e: Exception) { android.util.Log.w("MapRoute", "mapView.onStart failed: $e") }
+                Lifecycle.Event.ON_RESUME -> try { mapView.onResume() } catch (e: Exception) { android.util.Log.w("MapRoute", "mapView.onResume failed: $e") }
+                Lifecycle.Event.ON_PAUSE -> try { mapView.onPause() } catch (e: Exception) { android.util.Log.w("MapRoute", "mapView.onPause failed: $e") }
+                Lifecycle.Event.ON_STOP -> try { mapView.onStop() } catch (e: Exception) { android.util.Log.w("MapRoute", "mapView.onStop failed: $e") }
+                Lifecycle.Event.ON_DESTROY -> try { mapView.onDestroy() } catch (e: Exception) { android.util.Log.w("MapRoute", "mapView.onDestroy failed: $e") }
                 else -> {}
             }
         }
         lifecycle.addObserver(observer)
         onDispose {
             lifecycle.removeObserver(observer)
-            mapView.onDestroy()
-        }
-    }
-
-    // Ensure the MapView has been created
-    LaunchedEffect(mapView) {
-        // Call MapView.onCreate safely. Passing null is fine for our usage;
-        // we avoid reflection into private fields which may not exist on some Maps SDK versions.
-        try {
-            mapView.onCreate(null)
-        } catch (e: Exception) {
-            // Log and fallback to safe no-op
-            android.util.Log.w("MapRoute", "mapView.onCreate failed: $e")
+            try { mapView.onDestroy() } catch (e: Exception) { android.util.Log.w("MapRoute", "mapView.onDestroy failed during dispose: $e") }
         }
     }
 

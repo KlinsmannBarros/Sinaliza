@@ -21,7 +21,9 @@ data class HomeReport(
     val title: String,
     val description: String,
     val category: String = "Pothole",
-    val date: String = "2025-10-30"
+    val date: String = "2025-10-30",
+    val latitude: Double = 0.0,
+    val longitude: Double = 0.0
 )
 
 data class HomeUiState(
@@ -58,7 +60,13 @@ class HomeViewModel(
             matchesQuery && matchesCategory
         }
         HomeUiState(query = q, selectedCategory = cat, reports = filtered.map { entity ->
-            HomeReport(id = entity.id, title = entity.title, description = entity.description)
+            HomeReport(
+                id = entity.id,
+                title = entity.title,
+                description = entity.description,
+                latitude = entity.latitude,
+                longitude = entity.longitude
+            )
         })
     }.stateIn(viewModelScope, SharingStarted.Lazily, HomeUiState())
 
@@ -76,7 +84,7 @@ class HomeViewModel(
     fun addSampleReport(report: HomeReport) {
         viewModelScope.launch {
             try {
-                repo.addReport(com.example.core.Report(id = report.id, title = report.title, description = report.description, latitude = 0.0, longitude = 0.0))
+                repo.addReport(com.example.core.Report(id = report.id, title = report.title, description = report.description, latitude = report.latitude, longitude = report.longitude))
             } catch (_: Exception) {
             }
         }

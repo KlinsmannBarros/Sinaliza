@@ -42,7 +42,7 @@ class MainActivity : ComponentActivity() {
                 ex.printStackTrace(pw)
                 pw.flush()
                 val text = sw.toString()
-                val file = File(applicationContext.filesDir, "crash_${System.currentTimeMillis()}.txt")
+                val file = File(applicationContext.filesDir, "crash_${'$'}{System.currentTimeMillis()}.txt")
                 file.writeText(text)
                 Log.e("MainActivity", "Wrote crash log to ${file.absolutePath}")
             } catch (_: Throwable) {
@@ -120,11 +120,46 @@ fun MyApp() {
                 ) {
 
                     composable(BottomNavItem.Home.route) {
-                        HomeRoute()
+                        HomeRoute(onViewOnMap = { lat, lng ->
+                            // navigate to map with coordinates using args; save/restore state for smooth back behavior
+                            navController.navigate("map?lat=${lat}&lng=${lng}") {
+                                launchSingleTop = true
+                                restoreState = true
+                                popUpTo(BottomNavItem.Home.route) {
+                                    saveState = true
+                                }
+                            }
+                        })
                     }
 
+                    composable(
+                        route = "map?lat={lat}&lng={lng}",
+                        arguments = listOf(
+                            navArgument("lat") {
+                                type = NavType.StringType
+                                nullable = true
+                            },
+                            navArgument("lng") {
+                                type = NavType.StringType
+                                nullable = true
+                            }
+                        )
+                    ) { backStackEntry ->
+
+                        val lat = backStackEntry.arguments
+                            ?.getString("lat")
+                            ?.toDoubleOrNull()
+
+                        val lng = backStackEntry.arguments
+                            ?.getString("lng")
+                            ?.toDoubleOrNull()
+
+                        MapRoute(navController = navController, centerLat = lat, centerLng = lng)
+                    }
+
+                    // Keep a plain map route (no args) so bottom nav can navigate directly
                     composable(BottomNavItem.Map.route) {
-                        MapRoute(navController)
+                        MapRoute(navController = navController)
                     }
 
                     composable(
